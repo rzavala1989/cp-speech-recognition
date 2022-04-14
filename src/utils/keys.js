@@ -1,0 +1,1 @@
+export const ASSEMBLY_AI_API_KEY = '4f26eb046b434df485e15edf445bb898';
