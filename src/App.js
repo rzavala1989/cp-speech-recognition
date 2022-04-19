@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import MicRecorder from 'mic-recorder-to-mp3';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
@@ -11,13 +12,6 @@ const assembly = axios.create({
   },
 });
 
-assembly
-  .post('/transcript', {
-    audio_url: 'https://bit.ly/3yxKEIY',
-  })
-  .then((res) => console.log(res.data))
-  .catch((err) => console.error(err));
-
 function App() {
   //using mic recorder
   const recorder = useRef(null);
@@ -26,7 +20,14 @@ function App() {
   const [blob, setBlob] = useState(null);
   //are we recording?
   const [isRecording, setIsRecording] = useState(false);
+  //Upload specific information
   const [uploadedURL, setUploadedURL] = useState('');
+  //Transcript Information
+  const [transcriptID, setTranscriptID] = useState('');
+  const [transcriptData, setTranscriptData] = useState('');
+  const [transcript, setTranscript] = useState('');
+  //loading state
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     recorder.current = new MicRecorder({ bitRate: 128 });
@@ -40,6 +41,45 @@ function App() {
       });
     console.log(uploadedURL);
   }, [audioFile]);
+
+  //to get transcript once audio file is uploaded
+  const handleSubmitTranscriptId = () => {
+    assembly
+      .post('/transcript', {
+        audio_url: uploadedURL,
+      })
+      .then((res) => {
+        setTranscriptID(res.data.id);
+        handleCheckStatus();
+      })
+      .catch((e) => console.log(e));
+  };
+
+  //check status of our transcript so we can then receive data
+  const handleCheckStatus = async () => {
+    setLoading(true);
+    try {
+      await assembly.get(`/transcript/${transcriptID}`).then((res) => {
+        setTranscriptData(res.data);
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  //Use an interval to check status of transcript
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (transcriptData?.status !== 'completed' && loading) {
+        handleCheckStatus();
+      } else {
+        setLoading(false);
+        setTranscript(transcriptData.text);
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  });
 
   const startRecording = () => {
     //to make sure that we have browser support
@@ -95,10 +135,20 @@ function App() {
         >
           Stop
         </button>
-        <button className='bg-pink-300 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded'>
+        <button
+          onClick={handleSubmitTranscriptId}
+          className='bg-pink-300 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded'
+        >
           Send
         </button>
       </div>
+      {transcriptData.status === 'completed' ? (
+        <p>
+          <em>{transcript}</em>
+        </p>
+      ) : (
+        <p>({transcriptData.status})</p>
+      )}
     </div>
   );
 }
