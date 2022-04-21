@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import MicRecorder from 'mic-recorder-to-mp3';
+import { Audio } from 'react-loader-spinner';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { ASSEMBLY_AI_API_KEY } from './utils/keys';
@@ -124,30 +125,42 @@ function App() {
         <button
           disabled={isRecording}
           onClick={startRecording}
-          className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+          className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-3'
         >
           Record
         </button>
         <button
           disabled={!isRecording}
           onClick={stopRecording}
-          className='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded'
+          className='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mx-3'
         >
           Stop
         </button>
         <button
           onClick={handleSubmitTranscriptId}
-          className='bg-pink-300 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded'
+          className='bg-green-400 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mx-3'
         >
           Send
         </button>
       </div>
-      {transcriptData.status === 'completed' ? (
-        <p>
-          <em>{transcript}</em>
-        </p>
+      {loading ? (
+        <>
+          <Audio
+            color='red'
+            secondaryColor='orange'
+            height={100}
+            width={100}
+            strokeWidth={5}
+          />
+          <p>({transcriptData.status}...)</p>
+        </>
       ) : (
-        <p>({transcriptData.status})</p>
+        <div />
+      )}
+      {!loading && transcript && (
+        <div className='mockup-code'>
+          <p className='p-6'>{transcript}</p>
+        </div>
       )}
     </div>
   );
